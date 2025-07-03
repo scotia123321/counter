@@ -1,0 +1,176 @@
+import React, { useState, useEffect } from "react";
+
+export default function PauseLoggerApp() {
+  // Pause logic
+  const [isPaused, setIsPaused] = useState(false);
+  const [pauseCount, setPauseCount] = useState(0);
+  const [pauseDurations, setPauseDurations] = useState([]);
+  const [pauseStart, setPauseStart] = useState(null);
+  const [currentPauseTime, setCurrentPauseTime] = useState(0);
+
+  // Unripped bag logic
+  const [bagCount, setBagCount] = useState(0);
+  const [lastBagTime, setLastBagTime] = useState(null);
+
+  // Line stopped logic
+  const [lineStopped, setLineStopped] = useState(false);
+  const [lineStopCount, setLineStopCount] = useState(0);
+  const [lineStopDurations, setLineStopDurations] = useState([]);
+  const [lineStopStart, setLineStopStart] = useState(null);
+  const [currentLineStopTime, setCurrentLineStopTime] = useState(0);
+
+  // Timers
+  useEffect(() => {
+    const timer = setInterval(() => {
+      if (isPaused && pauseStart) {
+        setCurrentPauseTime(Date.now() - pauseStart);
+      }
+      if (lineStopped && lineStopStart) {
+        setCurrentLineStopTime(Date.now() - lineStopStart);
+      }
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [isPaused, pauseStart, lineStopped, lineStopStart]);
+
+  // Toggle pause
+  const handlePauseToggle = () => {
+    if (!isPaused) {
+      setPauseStart(Date.now());
+      setPauseCount(pauseCount + 1);
+    } else {
+      const duration = Date.now() - pauseStart;
+      setPauseDurations([...pauseDurations, duration]);
+      setPauseStart(null);
+      setCurrentPauseTime(0);
+    }
+    setIsPaused(!isPaused);
+  };
+
+  // Unripped bag
+  const handleUnrippedBag = () => {
+    setBagCount(bagCount + 1);
+    setLastBagTime(new Date().toLocaleTimeString());
+  };
+
+  // Toggle line stopped
+  const handleLineStoppedToggle = () => {
+    if (!lineStopped) {
+      setLineStopStart(Date.now());
+      setLineStopCount(lineStopCount + 1);
+    } else {
+      const duration = Date.now() - lineStopStart;
+      setLineStopDurations([...lineStopDurations, duration]);
+      setLineStopStart(null);
+      setCurrentLineStopTime(0);
+    }
+    setLineStopped(!lineStopped);
+  };
+
+  // Reset all
+  const handleReset = () => {
+    setIsPaused(false);
+    setPauseCount(0);
+    setPauseDurations([]);
+    setPauseStart(null);
+    setCurrentPauseTime(0);
+
+    setBagCount(0);
+    setLastBagTime(null);
+
+    setLineStopped(false);
+    setLineStopCount(0);
+    setLineStopDurations([]);
+    setLineStopStart(null);
+    setCurrentLineStopTime(0);
+  };
+
+  const formatDuration = (ms) => {
+    const seconds = Math.floor(ms / 1000);
+    const min = String(Math.floor(seconds / 60)).padStart(2, "0");
+    const sec = String(seconds % 60).padStart(2, "0");
+    return `${min}:${sec}`;
+  };
+
+  return (
+    <div className="p-6 max-w-xl mx-auto bg-white rounded-2xl shadow-xl space-y-6 text-center">
+      <h1 className="text-2xl font-bold">Pause Logger App</h1>
+
+      {/* Pause Section */}
+      <button
+        onClick={handlePauseToggle}
+        className={`w-full py-3 rounded-xl text-white text-lg font-semibold ${
+          isPaused ? "bg-green-600" : "bg-red-600"
+        }`}
+      >
+        {isPaused ? "Resume" : "Pause"}
+      </button>
+
+      <div className="space-y-2">
+        <p>Paused Count: {pauseCount}</p>
+        {isPaused && <p>Current Pause: {formatDuration(currentPauseTime)}</p>}
+        {pauseDurations.length > 0 && (
+          <>
+            <h2 className="font-semibold mt-2">Pause Durations:</h2>
+            <ul className="text-sm text-gray-600">
+              {pauseDurations.map((d, i) => (
+                <li key={i}>
+                  {i + 1}. {formatDuration(d)}
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
+      </div>
+
+      <hr className="my-4" />
+
+      {/* Unripped Bag */}
+      <button
+        onClick={handleUnrippedBag}
+        className="w-full py-3 bg-blue-600 text-white rounded-xl font-semibold"
+      >
+        Report Unripped Bag
+      </button>
+      <p>Unripped Bags: {bagCount}</p>
+      {lastBagTime && <p className="text-gray-500">Last: {lastBagTime}</p>}
+
+      <hr className="my-4" />
+
+      {/* Line Stopped */}
+      <button
+        onClick={handleLineStoppedToggle}
+        className={`w-full py-3 rounded-xl text-white font-semibold ${
+          lineStopped ? "bg-green-700" : "bg-yellow-600"
+        }`}
+      >
+        {lineStopped ? "Resume Line" : "Line Stopped"}
+      </button>
+
+      <div className="space-y-2">
+        <p>Line Stop Count: {lineStopCount}</p>
+        {lineStopped && <p>Current Stop: {formatDuration(currentLineStopTime)}</p>}
+        {lineStopDurations.length > 0 && (
+          <>
+            <h2 className="font-semibold mt-2">Stop Durations:</h2>
+            <ul className="text-sm text-gray-600">
+              {lineStopDurations.map((d, i) => (
+                <li key={i}>
+                  {i + 1}. {formatDuration(d)}
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
+      </div>
+
+      <hr className="my-4" />
+
+      <button
+        onClick={handleReset}
+        className="w-full py-3 bg-gray-700 text-white rounded-xl font-semibold"
+      >
+        Reset All
+      </button>
+    </div>
+  );
+}
